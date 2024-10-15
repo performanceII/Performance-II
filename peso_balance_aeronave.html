@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peso y Balance de Aeronave</title>
+    <style>
+        body {
+            background-image: url('https://img.freepik.com/foto-gratis/jumbo-jet-volando-cielo_23-2150895701.jpg?size=626&ext=jpg&ga=GA1.1.672697106.1718323200&semt=ais_user');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(10, 10, 10, 0.164);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid rgb(0, 0, 0);
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Peso y Balance de Aeronave</h1>
+        <div>
+            <label for="indice">Índice: </label>
+            <input type="number" id="indice" step="0.01" oninput="updateAllMoments()">
+        </div>
+        <table id="balanceTable">
+            <thead>
+                <tr>
+                    <th>Elemento</th>
+                    <th>Peso (kg)</th>
+                    <th>Brazo (in)</th>
+                    <th>Momento (kg·in)/Índice</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="text" name="elemento"></td>
+                    <td><input type="number" name="peso" step="0.1" oninput="updateMoment(this)"></td>
+                    <td><select name="brazo" onchange="updateMoment(this)">
+                        <option value="100">100</option>
+                        <option value="120">120</option>
+                        <option value="140">140</option>
+                        <option value="160">160</option>
+                        <option value="180">180</option>
+                    </select></td>
+                    <td><input type="number" name="momento" oninput="updateTotals()"></td>
+                    <td><button onclick="deleteRow(this)">Eliminar</button></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>Total</td>
+                    <td><input type="number" id="totalPeso" readonly></td>
+                    <td></td>
+                    <td><input type="number" id="totalMomento" readonly></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <button onclick="addRow()">Agregar Fila</button>
+        
+        <h2>C.G.=ΣMomentos/ΣPesos * Índice</h2>
+        <table>
+            <tr>
+                <th>C.G. (in)</th>
+            </tr>
+            <tr>
+                <td><input type="number" id="cg" readonly></td>
+            </tr>
+        </table>
+    </div>
+    
+    <script>
+        function addRow() {
+            const table = document.getElementById("balanceTable").getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td><input type="text" name="elemento"></td>
+                <td><input type="number" name="peso" step="0.1" oninput="updateMoment(this)"></td>
+                <td><select name="brazo" onchange="updateMoment(this)">
+                    <option value="100">100</option>
+                    <option value="120">120</option>
+                    <option value="140">140</option>
+                    <option value="160">160</option>
+                    <option value="180">180</option>
+                </select></td>
+                <td><input type="number" name="momento" oninput="updateTotals()"></td>
+                <td><button onclick="deleteRow(this)">Eliminar</button></td>
+            `;
+            updateAllMoments();
+        }
+
+        function deleteRow(button) {
+            const row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+            updateAllMoments();
+        }
+
+        function updateMoment(input) {
+            const row = input.parentNode.parentNode;
+            const peso = parseFloat(row.querySelector('input[name="peso"]').value) || 0;
+            const brazo = parseFloat(row.querySelector('select[name="brazo"]').value) || 0;
+            const momento = row.querySelector('input[name="momento"]');
+            const indice = parseFloat(document.getElementById('indice').value) || 1;
+            momento.value = ((peso * brazo) / indice).toFixed(2);
+            updateTotals();
+        }
+
+        function updateAllMoments() {
+            const rows = document.querySelectorAll('#balanceTable tbody tr');
+            rows.forEach(row => {
+                const peso = parseFloat(row.querySelector('input[name="peso"]').value) || 0;
+                const brazo = parseFloat(row.querySelector('select[name="brazo"]').value) || 0;
+                const momento = row.querySelector('input[name="momento"]');
+                const indice = parseFloat(document.getElementById('indice').value) || 1;
+                momento.value = ((peso * brazo) / indice).toFixed(2);
+            });
+            updateTotals();
+        }
+
+        function updateTotals() {
+            let totalPeso = 0;
+            let totalMomento = 0;
+
+            // Sumar los pesos y momentos de las filas del cuerpo de la tabla (tbody)
+            const rows = document.querySelectorAll('#balanceTable tbody tr');
+            rows.forEach(row => {
+                totalPeso += parseFloat(row.querySelector('input[name="peso"]').value) || 0;
+                totalMomento += parseFloat(row.querySelector('input[name="momento"]').value) || 0;
+            });
+
+            document.getElementById('totalPeso').value = totalPeso.toFixed(2);
+            document.getElementById('totalMomento').value = totalMomento.toFixed(2);
+
+            // Calcular y actualizar el C.G.
+            const indice = parseFloat(document.getElementById('indice').value) || 1;
+            const cg = totalPeso ? (totalMomento / totalPeso) * indice : 0;
+            document.getElementById('cg').value = cg.toFixed(2);
+        }
+    </script>
+</body>
+</html>
